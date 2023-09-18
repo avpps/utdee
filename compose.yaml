@@ -1,0 +1,74 @@
+services:
+  backend:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    image: avpps/utdee-backend:latest
+    ports:
+      - 8000:8000
+    restart: always
+    environment:
+      TZ: $TZ
+      PORT: 8000
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_TEST_DB: $MONGO_INITDB_DATABASE
+      MONGO_TEST_USER: $MONGO_TEST_USER
+      MONGO_TEST_USER_PASSWORD: /run/secrets/mongo_test_user_password
+    secrets:
+      - mongo_test_user_password
+    volumes:
+      - type: bind
+        source: $BACKEND_LOCAL_CODE_PATH
+        target: /app/
+        bind:
+          propagation: shared
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6.0.10
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD  # TODO
+      MONGO_INITDB_DATABASE: $MONGO_INITDB_DATABASE
+      MONGO_TEST_USER: $MONGO_TEST_USER
+      MONGO_TEST_USER_PASSWORD: $MONGO_TEST_USER_PASSWORD  # TODO
+    volumes:
+      - mongo:/data/db
+      - ./services/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    secrets:
+      - mongo_initdb_root_password
+      - mongo_test_user_password
+
+  mongo-express:
+    image: mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=$MONGO_INITDB_ROOT_USERNAME
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=$MONGO_INITDB_ROOT_PASSWORD  # TODO
+      - ME_CONFIG_BASICAUTH_USERNAME=$MONGO_EXPRESS_LOGIN
+      - ME_CONFIG_BASICAUTH_PASSWORD=$MONGO_EXPRESS_PASSWORD  # TODO
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    secrets:
+      - mongo_express_password
+
+secrets:
+  mongo_initdb_root_password:
+    file: ./.secrets/mongo_initdb_root_password.txt
+  mongo_test_user_password:
+    file: ./.secrets/mongo_test_user_password.txt
+  mongo_express_password:
+    file: ./.secrets/mongo_express_password.txt
+
+volumes:
+  mongo:
