@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: ./services/backend
+      context: $BACKEND_LOCAL_CODE_PATH
       dockerfile: Dockerfile
     image: avpps/utdee-backend:latest
     ports:
@@ -21,7 +21,7 @@ services:
       - backend_cert
       - backend_key
     volumes:
-      - type: bind
+      - type: bind  # TODO: binding for local dev purposes only
         source: $BACKEND_LOCAL_CODE_PATH
         target: /app/
         bind:
