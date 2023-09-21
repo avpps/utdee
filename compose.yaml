@@ -14,8 +14,12 @@ services:
       MONGO_TEST_DB: $MONGO_INITDB_DATABASE
       MONGO_TEST_USER: $MONGO_TEST_USER
       MONGO_TEST_USER_PASSWORD: /run/secrets/mongo_test_user_password
+      GUNICORN_CERT: /run/secrets/backend_cert
+      GUNICORN_KEY: /run/secrets/backend_key
     secrets:
       - mongo_test_user_password
+      - backend_cert
+      - backend_key
     volumes:
       - type: bind
         source: $BACKEND_LOCAL_CODE_PATH
@@ -46,6 +50,7 @@ services:
 
   mongo-express:
     image: mongo-express
+    restart: always
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongo
       - ME_CONFIG_MONGODB_PORT=27017
@@ -69,6 +74,10 @@ secrets:
     file: ./.secrets/mongo_test_user_password.txt
   mongo_express_password:
     file: ./.secrets/mongo_express_password.txt
+  backend_cert:
+    file: ./.secrets/backend_cert.pem
+  backend_key:
+    file: ./.secrets/backend_key.pem
 
 volumes:
   mongo:

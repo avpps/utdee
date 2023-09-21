@@ -1,6 +1,6 @@
 import os
 
-from bottle import route, run
+from bottle import Bottle, run
 from pymongo import MongoClient
 from pendulum import now
 
@@ -11,9 +11,14 @@ MONGO_URI = os.getenv("MONGO_URI")
 MONGO_TEST_DB = os.getenv("MONGO_TEST_DB")
 MONGO_TEST_USER = os.getenv("MONGO_TEST_USER")
 MONGO_TEST_USER_PASSWORD = os.getenv("MONGO_TEST_USER_PASSWORD")
+GUNICORN_CERT = os.getenv("GUNICORN_CERT")
+GUNICORN_KEY = os.getenv("GUNICORN_KEY")
 
 
-@route('/entry')
+backend = Bottle()
+
+
+@backend.route('/entry')
 def entry():
     with open(MONGO_TEST_USER_PASSWORD) as f:
         password = f.read()
@@ -30,4 +35,12 @@ def entry():
 
 
 if __name__ == '__main__':
-    run(host="0.0.0.0", port=PORT, debug=True)
+    run(
+        app=backend,
+        host="0.0.0.0",
+        port=PORT,
+        debug=True,
+        server="gunicorn",
+        keyfile=GUNICORN_KEY,
+        certfile=GUNICORN_CERT,
+    )
