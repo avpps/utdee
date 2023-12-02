@@ -16,7 +16,7 @@ services:
       MONGO_TEST_USER_PASSWORD: /run/secrets/mongo_test_user_password
       GUNICORN_CERT: /run/secrets/backend_cert
       GUNICORN_KEY: /run/secrets/backend_key
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://opentelemetry-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     secrets:
       - mongo_test_user_password
       - backend_cert
@@ -28,6 +28,9 @@ services:
         bind:
           propagation: shared
     depends_on:
+      - mongo
+    networks:
+      - tempo-network
       - mongo
 
   mongo:
@@ -48,6 +51,8 @@ services:
     secrets:
       - mongo_initdb_root_password
       - mongo_test_user_password
+    networks:
+      - mongo
 
   mongo-express:
     image: mongo-express
@@ -67,13 +72,8 @@ services:
       - mongo
     secrets:
       - mongo_express_password
-
-  opentelemetry-collector:
-    image: otel/opentelemetry-collector-contrib:0.90.1
-    environment:
-      - mode=deployment
-    ports:
-      - 4317:4317
+    networks:
+      - mongo
 
 secrets:
   mongo_initdb_root_password:
@@ -88,4 +88,10 @@ secrets:
     file: ./.secrets/backend_key.pem
 
 volumes:
+  mongo:
+
+networks:
+  tempo-network:
+    external:
+      name: tempo-network
   mongo:
