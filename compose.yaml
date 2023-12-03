@@ -29,9 +29,11 @@ services:
           propagation: shared
     depends_on:
       - mongo
+      - mysql
     networks:
       - tempo-network
       - mongo
+      - mysql
 
   mongo:
     image: mongo:6.0.10
@@ -75,6 +77,37 @@ services:
     networks:
       - mongo
 
+  mysql:
+    image: mysql:8.2.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_DATABASE: db
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
+    volumes:
+      - mysql:/var/lib/mysql
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    networks:
+      - mysql
+
+  adminer:
+    image: adminer:4.8.1
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - mysql
+    networks:
+      - mysql
+
 secrets:
   mongo_initdb_root_password:
     file: ./.secrets/mongo_initdb_root_password.txt
@@ -82,6 +115,14 @@ secrets:
     file: ./.secrets/mongo_test_user_password.txt
   mongo_express_password:
     file: ./.secrets/mongo_express_password.txt
+
+  mysql_root_password:
+    file: ./.secrets/mysql_root_password.txt
+  mysql_user:
+    file: ./.secrets/mysql_user.txt
+  mysql_password:
+    file: ./.secrets/mysql_password.txt
+
   backend_cert:
     file: ./.secrets/backend_cert.pem
   backend_key:
@@ -89,9 +130,11 @@ secrets:
 
 volumes:
   mongo:
+  mysql:
 
 networks:
   tempo-network:
     external:
       name: tempo-network
   mongo:
+  mysql:
