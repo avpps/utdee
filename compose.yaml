@@ -3,7 +3,7 @@ services:
     build:
       context: $BACKEND_LOCAL_CODE_PATH
       dockerfile: Dockerfile
-    image: avpps/utdee-backend:latest
+    image: avpps/utdee_backend:latest
     ports:
       - 8000:8000
     restart: always
